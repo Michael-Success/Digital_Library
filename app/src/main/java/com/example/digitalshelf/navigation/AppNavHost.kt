@@ -5,17 +5,16 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.digitalshelf.ui.theme.screens.Home.Home
+import com.example.digitalshelf.ui.theme.screens.about.AboutScreen
 import com.example.digitalshelf.ui.theme.screens.admin.AdminDashboardScreen
+import com.example.digitalshelf.ui.theme.screens.contact.ContactScreen
 import com.example.digitalshelf.ui.theme.screens.generalhomescreen.GeneralHomeScreen
 import com.example.digitalshelf.ui.theme.screens.login.LoginScreen
 import com.example.digitalshelf.ui.theme.screens.signup.SignUpScreen
+import com.example.digitalshelf.ui.theme.screens.help.HelpScreen
+import com.example.digitalshelf.ui.theme.screens.personallibrary.PersonalLibraryScreen
+import com.example.digitalshelf.ui.theme.screens.settings.SettingsScreen
 
-//// Define your route constants here
-//const val ROUTE_HOME = "home"
-//const val ROUTE_SIGNUP = "signup"
-//const val ROUTE_LOGIN = "login"
-//const val ROUTE_ADMIN_DASHBOARD = "admin_dashboard"
-//const val ROUTE_GENERAL_HOME = "general_home"
 
 @Composable
 fun AppNavHost(navController: NavHostController) {
@@ -46,7 +45,7 @@ fun AppNavHost(navController: NavHostController) {
         // Login Page
         composable(ROUTE_LOGIN) {
             LoginScreen(
-                navController = navController, // Pass navController to LoginScreen
+                navController = navController,
                 onLoginSuccess = { userRole ->
                     if (userRole == "admin") {
                         navController.navigate(ROUTE_ADMIN_DASHBOARD) // Navigate to Admin Dashboard
@@ -57,10 +56,32 @@ fun AppNavHost(navController: NavHostController) {
             )
         }
 
-        composable(ROUTE_GENERAL_HOME){
+        // General Home Page
+        composable(ROUTE_GENERAL_HOME) {
             GeneralHomeScreen(navController)
         }
 
-        // Add General Home or any other screens here as needed
+        // About Screen
+        composable(ROUTE_ABOUT_SCREEN) {
+            AboutScreen(navController)
+        }
+
+        // Contact Screen
+        composable(ROUTE_CONTACT_SCREEN) {
+            ContactScreen(navController)
+        }
+
+        // Help Screen
+        composable(ROUTE_HELP_SCREEN) {
+            HelpScreen(navController)
+        }
+
+        // Settings Screen
+        composable(ROUTE_SETTINGS_SCREEN) {
+            SettingsScreen(navController)
+        }
+        composable(ROUTE_PERSONAL_LIBRARY) {
+            PersonalLibraryScreen(navController)
+        }
     }
 }

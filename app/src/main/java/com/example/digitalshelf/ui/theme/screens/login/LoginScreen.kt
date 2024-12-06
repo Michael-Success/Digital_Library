@@ -16,12 +16,15 @@ import androidx.navigation.NavHostController
 import com.example.digitalshelf.navigation.ROUTE_SIGNUP
 import com.example.digitalshelf.repository.AuthRepository  // Import the repository
 
+
+
 @Composable
 fun LoginScreen(navController: NavHostController, onLoginSuccess: (String) -> Unit) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    var errorMessage by remember { mutableStateOf("") }
-    val authRepository = AuthRepository() // Create an instance of AuthRepository
+    var errorMessage by remember { mutableStateOf("") } // `var` is correct here
+    var loading by remember { mutableStateOf(false) } // State to track loading
+    val authRepository = AuthRepository()
 
     Column(
         modifier = Modifier
@@ -59,26 +62,36 @@ fun LoginScreen(navController: NavHostController, onLoginSuccess: (String) -> Un
             Spacer(modifier = Modifier.height(8.dp))
         }
 
-        // Login Button
-        Button(
-            onClick = {
-                authRepository.loginUser(
-                    email = email,
-                    password = password,
-                    onLoginSuccess = { userRole ->
-                        // Handle success, navigate based on user role
-                        if (userRole == "admin") {
-                            navController.navigate("admin_dashboard")
-                        } else {
-                            navController.navigate("general_home")
+        // Show Circular Progress Indicator if loading
+        if (loading) {
+            CircularProgressIndicator(modifier = Modifier.size(48.dp))
+        } else {
+            // Login Button
+            Button(
+                onClick = {
+                    loading = true // Set loading to true when login starts
+                    authRepository.loginUser(
+                        email = email,
+                        password = password,
+                        onLoginSuccess = { userRole ->
+                            loading = false // Set loading to false when login is successful
+                            // Handle success, navigate based on user role
+                            if (userRole == "admin") {
+                                navController.navigate("admin_dashboard")
+                            } else {
+                                navController.navigate("general_home")
+                            }
+                        },
+                        onError = { message ->
+                            loading = false // Set loading to false in case of error
+                            errorMessage = message // Correctly assign the error message
                         }
-                    },
-                    onError = { errorMessage = it }
-                )
-            },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text(text = "Login")
+                    )
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(text = "Login")
+            }
         }
 
         Spacer(modifier = Modifier.height(16.dp))

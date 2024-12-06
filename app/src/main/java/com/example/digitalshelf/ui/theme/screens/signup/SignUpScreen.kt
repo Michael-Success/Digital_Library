@@ -19,6 +19,8 @@ import com.google.firebase.database.ktx.database
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.auth.FirebaseAuth
 
+
+
 @Composable
 fun SignUpScreen(navController: NavHostController, onRegisterSuccess: () -> Unit) {
     var email by remember { mutableStateOf("") }
@@ -27,6 +29,7 @@ fun SignUpScreen(navController: NavHostController, onRegisterSuccess: () -> Unit
     var firstName by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf("") }
     var showSnackbar by remember { mutableStateOf(false) }
+    var loading by remember { mutableStateOf(false) } // State for loading
 
     Box(
         modifier = Modifier
@@ -91,26 +94,36 @@ fun SignUpScreen(navController: NavHostController, onRegisterSuccess: () -> Unit
                 Spacer(modifier = Modifier.height(8.dp))
             }
 
-            // Register Button
-            Button(
-                onClick = {
-                    registerUser(
-                        firstName = firstName,
-                        email = email,
-                        password = password,
-                        confirmPassword = confirmPassword,
-                        onRegisterSuccess = {
-                            showSnackbar = true
-                            navController.navigate(ROUTE_LOGIN) {
-                                popUpTo(ROUTE_SIGNUP) { inclusive = true }
+            // Show Circular Progress Indicator if loading is true
+            if (loading) {
+                CircularProgressIndicator(modifier = Modifier.size(48.dp)) // Show progress bar
+            } else {
+                // Register Button
+                Button(
+                    onClick = {
+                        loading = true // Set loading to true when registration starts
+                        registerUser(
+                            firstName = firstName,
+                            email = email,
+                            password = password,
+                            confirmPassword = confirmPassword,
+                            onRegisterSuccess = {
+                                loading = false // Set loading to false on success
+                                showSnackbar = true
+                                navController.navigate(ROUTE_LOGIN) {
+                                    popUpTo(ROUTE_SIGNUP) { inclusive = true }
+                                }
+                            },
+                            onError = { message ->
+                                loading = false // Set loading to false in case of error
+                                errorMessage = message // Update the errorMessage variable with the received message
                             }
-                        },
-                        onError = { errorMessage = it }
-                    )
-                },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(text = "Register")
+                        )
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(text = "Register")
+                }
             }
 
             Spacer(modifier = Modifier.height(16.dp))

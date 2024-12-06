@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.Button
@@ -19,20 +20,26 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
-import com.google.firebase.storage.FirebaseStorage
-import com.google.firebase.database.FirebaseDatabase
-
+import com.example.digitalshelf.viewmodels.AdminViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.digitalshelf.models.Resource
 
 @Composable
-fun AdminDashboardScreen(navController: NavHostController) {
-    var fileType by remember { mutableStateOf("") } // Holds the type of file selected
-    var resourceName by remember { mutableStateOf("") } // Name of the resource
-    var description by remember { mutableStateOf("") } // Description of the resource
+fun AdminDashboardScreen(navController: NavHostController, viewModel: AdminViewModel = viewModel()) {
+    var resourceName by remember { mutableStateOf("") }
+    var description by remember { mutableStateOf("") }
+    var fileType by remember { mutableStateOf("") }
+    var fileUri by remember { mutableStateOf<Uri?>(null) }  // File URI state
     var errorMessage by remember { mutableStateOf("") }
     var successMessage by remember { mutableStateOf("") }
-    var fileUri by remember { mutableStateOf<Uri?>(null) } // File URI
 
     val context = LocalContext.current
+
+    // Register for the result of the file selection intent
+    val getFileResult = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+        // Update the fileUri when a file is selected
+        fileUri = uri
+    }
 
     Box(
         modifier = Modifier
@@ -41,7 +48,7 @@ fun AdminDashboardScreen(navController: NavHostController) {
     ) {
         Column(
             modifier = Modifier
-                .align(Alignment.Center) // Aligning the content to the center
+                .align(Alignment.Center)
                 .fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -68,25 +75,22 @@ fun AdminDashboardScreen(navController: NavHostController) {
                 modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
             )
 
-            // File Type Input (TextField instead of Dropdown)
+            // File Type Input (Dropdown for PDF, Video, Audio, Audiobook)
             TextField(
                 value = fileType,
                 onValueChange = { fileType = it },
-                label = { Text("File Type (e.g., PDF, Video, Audio, Audiobook)") },
+                label = { Text("File Type (PDF, Video, Audio, Audiobook)") },
                 modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
             )
 
             // Select File Button
             Button(
                 onClick = {
-                    val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
-                        type = "*/*" // Allows selection of any file type
-                    }
-                    (context as Activity).startActivityForResult(intent, 1234) // Replace with your logic to handle file selection
+                    getFileResult.launch("application/pdf")  // Launch file picker for PDF files only
                 },
                 modifier = Modifier.padding(bottom = 16.dp)
             ) {
-                Text(text = "Select File")
+                Text(text = "Select File (PDF Only)")
             }
 
             // Upload Button
@@ -95,14 +99,8 @@ fun AdminDashboardScreen(navController: NavHostController) {
                     if (resourceName.isBlank() || description.isBlank() || fileType.isBlank() || fileUri == null) {
                         errorMessage = "All fields are required, and a file must be selected."
                     } else {
-                        uploadResourceToFirebase(
-                            resourceName = resourceName,
-                            description = description,
-                            fileType = fileType,
-                            fileUri = fileUri!!,
-                            onSuccess = { successMessage = it },
-                            onError = { errorMessage = it }
-                        )
+                        val resource = Resource(resourceName, description, fileType)
+                        viewModel.uploadResource(resource, fileUri!!) // Upload the resource
                     }
                 },
                 modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
@@ -121,40 +119,4 @@ fun AdminDashboardScreen(navController: NavHostController) {
             }
         }
     }
-}
-
-// Function to upload file to Firebase
-fun uploadResourceToFirebase(
-    resourceName: String,
-    description: String,
-    fileType: String,
-    fileUri: Uri,
-    onSuccess: (String) -> Unit,
-    onError: (String) -> Unit
-) {
-    val storageReference = FirebaseStorage.getInstance().reference
-    val databaseReference = FirebaseDatabase.getInstance().reference
-
-    val fileRef = storageReference.child("Media/$fileType/${System.currentTimeMillis()}")
-    val resourceMetadata = mapOf(
-        "name" to resourceName,
-        "description" to description,
-        "fileType" to fileType
-    )
-
-    fileRef.putFile(fileUri)
-        .addOnSuccessListener { taskSnapshot ->
-            fileRef.downloadUrl.addOnSuccessListener { uri ->
-                databaseReference.child("resources").push().setValue(resourceMetadata + ("url" to uri.toString()))
-                    .addOnSuccessListener {
-                        onSuccess("Resource uploaded successfully!")
-                    }
-                    .addOnFailureListener { exception ->
-                        onError("Failed to save metadata: ${exception.message}")
-                    }
-            }
-        }
-        .addOnFailureListener { exception ->
-            onError("File upload failed: ${exception.message}")
-        }
 }
