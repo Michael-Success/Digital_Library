@@ -61,7 +61,7 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
     implementation("androidx.navigation:navigation-compose:2.7.2")
-
+    implementation("io.coil-kt:coil-compose:1.4.0")
     implementation ("androidx.lifecycle:lifecycle-livedata-ktx:2.6.0")
     implementation ("androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.0")
 }

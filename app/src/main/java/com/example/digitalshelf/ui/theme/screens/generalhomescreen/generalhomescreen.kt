@@ -1,6 +1,9 @@
 package com.example.digitalshelf.ui.theme.screens.generalhomescreen
 
 import android.annotation.SuppressLint
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -26,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import coil.compose.rememberImagePainter
 import com.example.digitalshelf.R
 import com.example.digitalshelf.models.Resource
 import com.example.digitalshelf.navigation.ROUTE_ABOUT_SCREEN
@@ -201,6 +205,8 @@ fun CategoryTabs(selectedTab: String, onTabSelected: (String) -> Unit) {
 
 @Composable
 fun ResourceCard(resource: Resource) {
+    val context = LocalContext.current // Get the current context
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -220,7 +226,16 @@ fun ResourceCard(resource: Resource) {
                     .background(Color.Gray),
                 contentAlignment = Alignment.Center
             ) {
-                Text("Image Placeholder", color = Color.White)
+                // Load the image from Firebase Storage
+                resource.fileUrl?.let { url ->
+                    Image(
+                        painter = rememberImagePainter(url),
+                        contentDescription = "Resource Image",
+                        modifier = Modifier.fillMaxSize()
+                    )
+                } ?: run {
+                    Text("Image Placeholder", color = Color.White)
+                }
             }
             Spacer(modifier = Modifier.height(8.dp))
             Text(
@@ -236,7 +251,7 @@ fun ResourceCard(resource: Resource) {
             )
             Spacer(modifier = Modifier.height(8.dp))
             Button(
-                onClick = { /* Handle download action */ },
+                onClick = { handleDownload(resource.fileUrl, context) }, // Pass the context explicitly
                 modifier = Modifier.align(Alignment.End),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.primary
@@ -245,6 +260,20 @@ fun ResourceCard(resource: Resource) {
                 Text("Download")
             }
         }
+    }
+}
+
+fun handleDownload(fileUrl: String?, context: Context) {
+    if (fileUrl != null) {
+        try {
+            val intent = Intent(Intent.ACTION_VIEW)
+            intent.data = Uri.parse(fileUrl)
+            context.startActivity(intent)
+        } catch (e: Exception) {
+            Toast.makeText(context, "Unable to open file", Toast.LENGTH_SHORT).show()
+        }
+    } else {
+        Toast.makeText(context, "Invalid file URL", Toast.LENGTH_SHORT).show()
     }
 }
 
