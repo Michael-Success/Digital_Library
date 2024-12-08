@@ -27,22 +27,31 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.example.digitalshelf.R
+import com.example.digitalshelf.models.Resource
 import com.example.digitalshelf.navigation.ROUTE_ABOUT_SCREEN
 import com.example.digitalshelf.navigation.ROUTE_CONTACT_SCREEN
 import com.example.digitalshelf.navigation.ROUTE_HELP_SCREEN
 import com.example.digitalshelf.navigation.ROUTE_PERSONAL_LIBRARY
 import com.example.digitalshelf.navigation.ROUTE_SETTINGS_SCREEN
+import com.example.digitalshelf.viewmodels.AdminViewModel
 import com.example.digitalshelf.viewmodels.GeneralHomeViewModel
+
 
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GeneralHomeScreen(navController: NavHostController, viewModel: GeneralHomeViewModel = viewModel()) {
+    // Observe the selected tab and resources
     val selectedTab by viewModel.selectedTab.collectAsState()
     val resources by viewModel.resources.collectAsState()
 
     var expanded by remember { mutableStateOf(false) } // For the menu dropdown
+
+    // Call fetchResources whenever the selected tab changes
+    LaunchedEffect(selectedTab) {
+        viewModel.fetchResources(selectedTab) // Fetch resources based on the selected tab
+    }
 
     Scaffold(
         topBar = {
@@ -62,9 +71,7 @@ fun GeneralHomeScreen(navController: NavHostController, viewModel: GeneralHomeVi
                                 contentDescription = "App Logo",
                                 modifier = Modifier.size(40.dp)
                             )
-                            // No need for Spacer, the logo is already on the left
                         }
-                        // Text is centered in the Box
                         Text(
                             text = "General Library",
                             fontSize = 20.sp,
@@ -141,7 +148,9 @@ fun GeneralHomeScreen(navController: NavHostController, viewModel: GeneralHomeVi
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    items(resources) { resource -> ResourceCard(resource) }
+                    items(resources) { resource ->
+                        ResourceCard(resource)
+                    }
                 }
             }
         }
@@ -189,8 +198,9 @@ fun CategoryTabs(selectedTab: String, onTabSelected: (String) -> Unit) {
     }
 }
 
+
 @Composable
-fun ResourceCard(resource: String) {
+fun ResourceCard(resource: Resource) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -214,13 +224,13 @@ fun ResourceCard(resource: String) {
             }
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = resource,
+                text = resource.name,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary
             )
             Text(
-                text = "Description of $resource",
+                text = resource.description,
                 fontSize = 14.sp,
                 color = Color.Gray
             )
@@ -237,3 +247,4 @@ fun ResourceCard(resource: String) {
         }
     }
 }
+
