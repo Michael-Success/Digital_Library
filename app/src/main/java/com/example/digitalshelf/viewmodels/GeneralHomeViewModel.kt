@@ -32,7 +32,7 @@ class GeneralHomeViewModel : ViewModel() {
     // Function to fetch resources from Firebase based on the tab
     fun fetchResources(tab: String) {
         viewModelScope.launch {
-            database.child("resources").child(tab).get().addOnSuccessListener { snapshot ->
+            database.child("resources").get().addOnSuccessListener { snapshot ->
                 val newResources = snapshot.children.mapNotNull { child ->
                     val name = child.child("name").getValue(String::class.java)
                     val description = child.child("description").getValue(String::class.java)
@@ -40,7 +40,10 @@ class GeneralHomeViewModel : ViewModel() {
                     val fileUrl = child.child("fileUrl").getValue(String::class.java)
 
                     if (name != null && description != null && fileType != null && fileUrl != null) {
-                        Resource(name, description, fileType, fileUrl)
+                        // Only include resources that match the selected tab
+                        if (fileType.equals(tab, ignoreCase = true)) {
+                            Resource(name, description, fileType, fileUrl)
+                        } else null
                     } else null
                 }
                 _resources.value = newResources
@@ -49,6 +52,7 @@ class GeneralHomeViewModel : ViewModel() {
             }
         }
     }
+
 
 }
 
