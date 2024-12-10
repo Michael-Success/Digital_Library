@@ -39,6 +39,7 @@ import com.example.digitalshelf.navigation.ROUTE_PERSONAL_LIBRARY
 import com.example.digitalshelf.navigation.ROUTE_SETTINGS_SCREEN
 import com.example.digitalshelf.viewmodels.AdminViewModel
 import com.example.digitalshelf.viewmodels.GeneralHomeViewModel
+import com.google.firebase.auth.FirebaseAuth
 
 
 
@@ -131,11 +132,11 @@ fun GeneralHomeScreen(navController: NavHostController, viewModel: GeneralHomeVi
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    TextButton(onClick = { /* Home */ }) { Text("Home (Active)", color = Color.Black) }
+                    TextButton(onClick = { /* Home */ }) { Text("Home (Active)", color = Color.Blue) }
                     TextButton(onClick = { navController.navigate(ROUTE_PERSONAL_LIBRARY) }) {
                         Text("Personal Library", color = Color.Black)
                     }
-                    TextButton(onClick = { /* Logout */ }) { Text("Logout", color = Color.Black) }
+                    TextButton(onClick = { handleLogout(navController) }) { Text("Logout", color = Color.Black) }
                 }
             }
         },
@@ -274,6 +275,18 @@ fun handleDownload(fileUrl: String?, context: Context) {
         }
     } else {
         Toast.makeText(context, "Invalid file URL", Toast.LENGTH_SHORT).show()
+    }
+}
+
+
+// At the bottom or top of GeneralHomeScreen.kt
+
+
+fun handleLogout(navController: NavHostController) {
+    FirebaseAuth.getInstance().signOut()
+    Toast.makeText(navController.context, "Logged out successfully", Toast.LENGTH_SHORT).show()
+    navController.navigate("ROUTE_LOGIN") {
+        popUpTo("ROUTE_HOME") { inclusive = true }
     }
 }
 
