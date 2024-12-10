@@ -11,5 +11,7 @@ const val ROUTE_ABOUT_SCREEN = "about_screen"
 const val ROUTE_CONTACT_SCREEN = "contact_screen"
 const val ROUTE_HELP_SCREEN = "help_screen"
 const val ROUTE_SETTINGS_SCREEN = "settings_screen"
+const val ROUTE_ADMIN_SELECTION = "admin_selection"
+
 
 

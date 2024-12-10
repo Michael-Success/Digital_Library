@@ -18,11 +18,12 @@ import com.example.digitalshelf.repository.AuthRepository  // Import the reposit
 
 
 
+
 @Composable
 fun LoginScreen(navController: NavHostController, onLoginSuccess: (String) -> Unit) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    var errorMessage by remember { mutableStateOf("") } // `var` is correct here
+    var errorMessage by remember { mutableStateOf("") } // Use `var` for mutable state
     var loading by remember { mutableStateOf(false) } // State to track loading
     val authRepository = AuthRepository()
 
@@ -73,13 +74,12 @@ fun LoginScreen(navController: NavHostController, onLoginSuccess: (String) -> Un
                     authRepository.loginUser(
                         email = email,
                         password = password,
-                        onLoginSuccess = { userRole ->
+                        onLoginSuccess = { userRole, userId ->
                             loading = false // Set loading to false when login is successful
                             // Handle success, navigate based on user role
-                            if (userRole == "admin") {
-                                navController.navigate("admin_dashboard")
-                            } else {
-                                navController.navigate("general_home")
+                            when (userRole) {
+                                "admin" -> navController.navigate("admin_selection")
+                                else -> navController.navigate("general_home")
                             }
                         },
                         onError = { message ->

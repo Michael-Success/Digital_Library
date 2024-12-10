@@ -35,6 +35,7 @@ import com.example.digitalshelf.models.Resource
 import com.example.digitalshelf.navigation.ROUTE_ABOUT_SCREEN
 import com.example.digitalshelf.navigation.ROUTE_CONTACT_SCREEN
 import com.example.digitalshelf.navigation.ROUTE_HELP_SCREEN
+import com.example.digitalshelf.navigation.ROUTE_LOGIN
 import com.example.digitalshelf.navigation.ROUTE_PERSONAL_LIBRARY
 import com.example.digitalshelf.navigation.ROUTE_SETTINGS_SCREEN
 import com.example.digitalshelf.viewmodels.AdminViewModel
@@ -136,7 +137,14 @@ fun GeneralHomeScreen(navController: NavHostController, viewModel: GeneralHomeVi
                     TextButton(onClick = { navController.navigate(ROUTE_PERSONAL_LIBRARY) }) {
                         Text("Personal Library", color = Color.Black)
                     }
-                    TextButton(onClick = { handleLogout(navController) }) { Text("Logout", color = Color.Black) }
+                    TextButton(onClick = {
+                        FirebaseAuth.getInstance().signOut()
+                        navController.navigate(ROUTE_LOGIN) {
+                            popUpTo(0)
+                        }
+                    }) {
+                        Text("Logout", color = Color.Black)
+                    }
                 }
             }
         },
@@ -162,25 +170,6 @@ fun GeneralHomeScreen(navController: NavHostController, viewModel: GeneralHomeVi
     )
 }
 
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun SearchBar(query: String, onSearchQueryChange: (String) -> Unit) {
-    OutlinedTextField(
-        value = query,
-        onValueChange = onSearchQueryChange,
-        placeholder = { Text("Search for resources...") },
-        leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color.White, RoundedCornerShape(8.dp)),
-        shape = RoundedCornerShape(8.dp),
-        colors = TextFieldDefaults.outlinedTextFieldColors(
-            focusedBorderColor = MaterialTheme.colorScheme.primary,
-            unfocusedBorderColor = Color.Gray
-        )
-    )
-}
 
 @Composable
 fun CategoryTabs(selectedTab: String, onTabSelected: (String) -> Unit) {
@@ -275,18 +264,6 @@ fun handleDownload(fileUrl: String?, context: Context) {
         }
     } else {
         Toast.makeText(context, "Invalid file URL", Toast.LENGTH_SHORT).show()
-    }
-}
-
-
-// At the bottom or top of GeneralHomeScreen.kt
-
-
-fun handleLogout(navController: NavHostController) {
-    FirebaseAuth.getInstance().signOut()
-    Toast.makeText(navController.context, "Logged out successfully", Toast.LENGTH_SHORT).show()
-    navController.navigate("ROUTE_LOGIN") {
-        popUpTo("ROUTE_HOME") { inclusive = true }
     }
 }
 

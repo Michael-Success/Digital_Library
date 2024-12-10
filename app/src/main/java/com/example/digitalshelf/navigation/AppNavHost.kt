@@ -7,6 +7,7 @@ import androidx.navigation.compose.composable
 import com.example.digitalshelf.ui.theme.screens.Home.Home
 import com.example.digitalshelf.ui.theme.screens.about.AboutScreen
 import com.example.digitalshelf.ui.theme.screens.admin.AdminDashboardScreen
+import com.example.digitalshelf.ui.theme.screens.admin.AdminSelectionScreen
 import com.example.digitalshelf.ui.theme.screens.contact.ContactScreen
 import com.example.digitalshelf.ui.theme.screens.generalhomescreen.GeneralHomeScreen
 import com.example.digitalshelf.ui.theme.screens.login.LoginScreen
@@ -48,12 +49,16 @@ fun AppNavHost(navController: NavHostController) {
                 navController = navController,
                 onLoginSuccess = { userRole ->
                     if (userRole == "admin") {
-                        navController.navigate(ROUTE_ADMIN_DASHBOARD) // Navigate to Admin Dashboard
+                        navController.navigate(ROUTE_ADMIN_SELECTION)
                     } else {
                         navController.navigate(ROUTE_GENERAL_HOME) // Navigate to General Home for regular users
                     }
                 }
             )
+        }
+
+        composable(ROUTE_ADMIN_SELECTION) {
+            AdminSelectionScreen(navController = navController)
         }
 
         // General Home Page

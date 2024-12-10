@@ -35,6 +35,7 @@ fun AdminDashboardScreen(navController: NavHostController, viewModel: AdminViewM
     var fileUri by remember { mutableStateOf<Uri?>(null) }
     var errorMessage by remember { mutableStateOf("") }
 
+
     // State for monitoring upload progress and status
     val uploadProgress by viewModel.uploadProgress.collectAsState()
     val uploadStatus by viewModel.uploadStatus.collectAsState()
@@ -150,6 +151,7 @@ fun UploadResourceButton(
 ) {
     var errorMessage by remember { mutableStateOf("") }
     val uploadStatus by viewModel.uploadStatus.collectAsState()
+    var loading by remember { mutableStateOf(false) }
 
     LaunchedEffect(uploadStatus) {
         if (uploadStatus == "Upload successfully!") {
@@ -159,47 +161,54 @@ fun UploadResourceButton(
             errorMessage = uploadStatus
         }
     }
+    if (loading) {
+        CircularProgressIndicator(modifier = Modifier.size(48.dp))
+    } else {
 
-    Button(
-        onClick = {
-            if (resourceName.isBlank() || description.isBlank() || fileType.isBlank() || fileUri == null) {
-                errorMessage = "All fields are required, and a file must be selected."
-            } else {
-                fileUri?.let { uri ->
-                    // Using uploadFileToStorage
-                    viewModel.uploadFileToStorage(
-                        fileUri = uri,
-                        onSuccess = { fileUrl ->
-                            val resource = Resource(
-                                name = resourceName,
-                                description = description,
-                                fileType = fileType,
-                                fileUrl = fileUrl
-                            )
-                            // Save resource metadata to the database
-                            viewModel.uploadResourceMetadata(resource)
-                        },
-                        onFailure = { failureMessage ->
-                            errorMessage = failureMessage
-                        }
-                    )
-                } ?: run {
-                    errorMessage = "File URI is null. Please select a valid file."
+        Button(
+            onClick = {
+                if (resourceName.isBlank() || description.isBlank() || fileType.isBlank() || fileUri == null) {
+                    errorMessage = "All fields are required, and a file must be selected."
+                } else {
+                    fileUri?.let { uri ->
+                        // Using uploadFileToStorage
+                        viewModel.uploadFileToStorage(
+                            fileUri = uri,
+                            onSuccess = { fileUrl ->
+                                val resource = Resource(
+                                    name = resourceName,
+                                    description = description,
+                                    fileType = fileType,
+                                    fileUrl = fileUrl
+                                )
+                                // Save resource metadata to the database
+                                viewModel.uploadResourceMetadata(resource)
+                            },
+                            onFailure = { failureMessage ->
+                                errorMessage = failureMessage
+                            }
+                        )
+                    } ?: run {
+                        errorMessage = "File URI is null. Please select a valid file."
+                    }
                 }
-            }
-        },
-        colors = ButtonDefaults.buttonColors(
-            containerColor = MaterialTheme.colorScheme.primary
-        )
-    ) {
-        Text("Upload Resource")
-    }
+            },
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primary
+            )
+        ) {
+            Text("Upload Resource")
+        }}
 
-    if (errorMessage.isNotBlank()) {
-        Text(
-            text = errorMessage,
-            color = Color.Red,
-            style = MaterialTheme.typography.titleLarge
-        )
-    }
+        if (errorMessage.isNotBlank()) {
+            Text(
+                text = errorMessage,
+                color = Color.Red,
+                style = MaterialTheme.typography.titleLarge
+            )
+        }
+
+
 }
+
+

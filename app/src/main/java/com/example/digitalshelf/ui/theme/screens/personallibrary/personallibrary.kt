@@ -1,6 +1,10 @@
 package com.example.digitalshelf.ui.theme.screens.personallibrary
 
 
+import android.net.Uri
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -27,11 +31,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
+import androidx.compose.ui.platform.LocalContext
 import com.example.digitalshelf.navigation.ROUTE_ABOUT_SCREEN
 import com.example.digitalshelf.navigation.ROUTE_CONTACT_SCREEN
 import com.example.digitalshelf.navigation.ROUTE_GENERAL_HOME
 import com.example.digitalshelf.navigation.ROUTE_HELP_SCREEN
+import com.example.digitalshelf.navigation.ROUTE_LOGIN
 import com.example.digitalshelf.navigation.ROUTE_SETTINGS_SCREEN
+
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -39,6 +46,9 @@ import com.example.digitalshelf.navigation.ROUTE_SETTINGS_SCREEN
 fun PersonalLibraryScreen(navController: NavHostController, viewModel: PersonalLibraryViewModel = viewModel()) {
     val selectedTab by viewModel.selectedTab.collectAsState()
     val resources by viewModel.resources.collectAsState()
+    var showDeleteAccountDialog by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+
 
     var expanded by remember { mutableStateOf(false) } // For dropdown menu
 
@@ -105,6 +115,33 @@ fun PersonalLibraryScreen(navController: NavHostController, viewModel: PersonalL
                                 navController.navigate(ROUTE_SETTINGS_SCREEN)
                             }
                         )
+                        DropdownMenuItem(
+                            text = { Text("Delete Account") },
+                            onClick = {
+                                expanded = false
+                                showDeleteAccountDialog = true // Show confirmation dialog
+                            }
+                        )
+                        if (showDeleteAccountDialog) {
+                            AlertDialog(
+                                onDismissRequest = { showDeleteAccountDialog = false },
+                                title = { Text("Delete Account") },
+                                text = { Text("Are you sure you want to delete your account? This action cannot be undone.") },
+                                confirmButton = {
+                                    TextButton(onClick = {
+                                        showDeleteAccountDialog = false
+                                        viewModel.deleteUserAccount(context, navController)
+                                    }) {
+                                        Text("Delete")
+                                    }
+                                },
+                                dismissButton = {
+                                    TextButton(onClick = { showDeleteAccountDialog = false }) {
+                                        Text("Cancel")
+                                    }
+                                }
+                            )
+                        }
                     }
                 }
             )
@@ -116,12 +153,12 @@ fun PersonalLibraryScreen(navController: NavHostController, viewModel: PersonalL
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
                     TextButton(onClick = { /* Home */ }) { Text("Personal Library", color = Color.Blue) }
-                    TextButton(onClick = { ROUTE_GENERAL_HOME }) {
+                    TextButton(onClick = { navController.navigate(ROUTE_GENERAL_HOME) }) {
                         Text("General Library", color = Color.Black)
                     }
                     TextButton(onClick = {
                         FirebaseAuth.getInstance().signOut()
-                        navController.navigate("login_route") {
+                        navController.navigate(ROUTE_LOGIN) {
                             popUpTo(0)
                         }
                     }) {
@@ -137,7 +174,8 @@ fun PersonalLibraryScreen(navController: NavHostController, viewModel: PersonalL
                 }
             }
         },
-        content = { paddingValues ->
+
+                content = { paddingValues ->
             Column(
                 modifier = Modifier
                     .fillMaxSize()
