@@ -9,12 +9,17 @@ import com.example.digitalshelf.ui.theme.screens.about.AboutScreen
 import com.example.digitalshelf.ui.theme.screens.admin.AdminDashboardScreen
 import com.example.digitalshelf.ui.theme.screens.admin.AdminSelectionScreen
 import com.example.digitalshelf.ui.theme.screens.contact.ContactScreen
+import com.example.digitalshelf.ui.theme.screens.deleteaccount.DeleteAccountScreen
 import com.example.digitalshelf.ui.theme.screens.generalhomescreen.GeneralHomeScreen
 import com.example.digitalshelf.ui.theme.screens.login.LoginScreen
 import com.example.digitalshelf.ui.theme.screens.signup.SignUpScreen
 import com.example.digitalshelf.ui.theme.screens.help.HelpScreen
 import com.example.digitalshelf.ui.theme.screens.personallibrary.PersonalLibraryScreen
+import com.example.digitalshelf.ui.theme.screens.profilecheck.ProfileCheckScreen
+import com.example.digitalshelf.ui.theme.screens.profilepage.ProfilePage
 import com.example.digitalshelf.ui.theme.screens.settings.SettingsScreen
+import com.example.digitalshelf.ui.theme.screens.sharing.SharingScreen
+import com.example.digitalshelf.ui.theme.screens.uploadscreen.UploadScreen
 
 
 @Composable
@@ -65,6 +70,26 @@ fun AppNavHost(navController: NavHostController) {
         composable(ROUTE_GENERAL_HOME) {
             GeneralHomeScreen(navController)
         }
+
+        composable(ROUTE_PROFILE) {
+            ProfilePage(navController)
+        }
+        composable(ROUTE_PROFILE_CHECK) {
+            ProfileCheckScreen(navController)
+        }
+        composable(ROUTE_UPLOAD_SCREEN) {
+            UploadScreen(navController)
+        }
+
+        // In your NavHost setup
+        composable(ROUTE_SHARING_SCREEN) {
+            SharingScreen(navController = navController)
+        }
+
+        composable(ROUTE_DELETE_ACCOUNT_SCREEN) {
+            DeleteAccountScreen(navController = navController)
+        }
+
 
         // About Screen
         composable(ROUTE_ABOUT_SCREEN) {

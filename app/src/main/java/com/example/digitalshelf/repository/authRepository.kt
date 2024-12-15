@@ -1,5 +1,6 @@
 package com.example.digitalshelf.repository
 
+import android.net.Uri
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.DataSnapshot
@@ -7,6 +8,8 @@ import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.database.ktx.database
 import com.google.firebase.ktx.Firebase
+import com.google.firebase.storage.FirebaseStorage
+import java.util.UUID
 
 
 data class User(
@@ -131,4 +134,56 @@ class AuthRepository {
             }
         }
     }
+}
+
+
+fun saveUserProfile(
+    fullName: String,
+    email: String,
+    age: String,
+    nationality: String,
+    profilePictureUri: Uri?,
+    selectedTabs: List<String>,
+    onSuccess: () -> Unit,
+    onError: (String) -> Unit
+) {
+    val databaseRef = FirebaseDatabase.getInstance().reference.child("profiles")
+    val storageRef = FirebaseStorage.getInstance().reference.child("profile_pictures/${UUID.randomUUID()}")
+
+    profilePictureUri?.let { uri ->
+        storageRef.putFile(uri)
+            .addOnSuccessListener { task ->
+                storageRef.downloadUrl.addOnSuccessListener { downloadUrl ->
+                    val userProfile = mapOf(
+                        "fullName" to fullName,
+                        "email" to email,
+                        "age" to age,
+                        "nationality" to nationality,
+                        "selectedTabs" to selectedTabs,
+                        "profilePictureUrl" to downloadUrl.toString()
+                    )
+                    databaseRef.child(email.replace(".", "_")).setValue(userProfile)
+                        .addOnSuccessListener { onSuccess() }
+                        .addOnFailureListener { onError(it.message ?: "Error saving profile") }
+                }
+            }
+            .addOnFailureListener { onError(it.message ?: "Error uploading profile picture") }
+    } ?: onError("No profile picture selected")
+}
+
+
+fun getUserProfilePictureUrl(onSuccess: (String) -> Unit, onError: (String) -> Unit) {
+    val userId = FirebaseAuth.getInstance().currentUser?.uid ?: run {
+        onError("User not logged in.")
+        return
+    }
+    val storageRef = FirebaseStorage.getInstance().reference.child("profile_pictures/$userId.jpg")
+
+    storageRef.downloadUrl
+        .addOnSuccessListener { uri ->
+            onSuccess(uri.toString())
+        }
+        .addOnFailureListener {
+            onError("Failed to retrieve profile picture: ${it.localizedMessage}")
+        }
 }

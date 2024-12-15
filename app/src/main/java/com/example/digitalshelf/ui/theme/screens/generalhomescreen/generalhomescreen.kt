@@ -10,21 +10,18 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -37,8 +34,8 @@ import com.example.digitalshelf.navigation.ROUTE_CONTACT_SCREEN
 import com.example.digitalshelf.navigation.ROUTE_HELP_SCREEN
 import com.example.digitalshelf.navigation.ROUTE_LOGIN
 import com.example.digitalshelf.navigation.ROUTE_PERSONAL_LIBRARY
+import com.example.digitalshelf.navigation.ROUTE_PROFILE
 import com.example.digitalshelf.navigation.ROUTE_SETTINGS_SCREEN
-import com.example.digitalshelf.viewmodels.AdminViewModel
 import com.example.digitalshelf.viewmodels.GeneralHomeViewModel
 import com.google.firebase.auth.FirebaseAuth
 
@@ -134,7 +131,7 @@ fun GeneralHomeScreen(navController: NavHostController, viewModel: GeneralHomeVi
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
                     TextButton(onClick = { /* Home */ }) { Text("Home (Active)", color = Color.Blue) }
-                    TextButton(onClick = { navController.navigate(ROUTE_PERSONAL_LIBRARY) }) {
+                    TextButton(onClick = { navController.navigate(ROUTE_PROFILE) }) {
                         Text("Personal Library", color = Color.Black)
                     }
                     TextButton(onClick = {
@@ -195,7 +192,9 @@ fun CategoryTabs(selectedTab: String, onTabSelected: (String) -> Unit) {
 
 @Composable
 fun ResourceCard(resource: Resource) {
-    val context = LocalContext.current // Get the current context
+    val context = LocalContext.current
+    val imageIndex = (resource.drawableResIds.indices).random()
+    val selectedImageResId = resource.drawableResIds.getOrElse(imageIndex) { R.drawable.image_placeholder }
 
     Card(
         modifier = Modifier
@@ -216,18 +215,15 @@ fun ResourceCard(resource: Resource) {
                     .background(Color.Gray),
                 contentAlignment = Alignment.Center
             ) {
-                // Load the image from Firebase Storage
-                resource.fileUrl?.let { url ->
-                    Image(
-                        painter = rememberImagePainter(url),
-                        contentDescription = "Resource Image",
-                        modifier = Modifier.fillMaxSize()
-                    )
-                } ?: run {
-                    Text("Image Placeholder", color = Color.White)
-                }
+                Image(
+                    painter = painterResource(id = selectedImageResId),
+                    contentDescription = "Resource Image",
+                    modifier = Modifier.fillMaxSize()
+                )
             }
+
             Spacer(modifier = Modifier.height(8.dp))
+
             Text(
                 text = resource.name,
                 fontSize = 18.sp,
@@ -239,9 +235,11 @@ fun ResourceCard(resource: Resource) {
                 fontSize = 14.sp,
                 color = Color.Gray
             )
+
             Spacer(modifier = Modifier.height(8.dp))
+
             Button(
-                onClick = { handleDownload(resource.fileUrl, context) }, // Pass the context explicitly
+                onClick = { handleDownload(resource.fileUrl, context) },
                 modifier = Modifier.align(Alignment.End),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.primary
@@ -252,6 +250,7 @@ fun ResourceCard(resource: Resource) {
         }
     }
 }
+
 
 fun handleDownload(fileUrl: String?, context: Context) {
     if (fileUrl != null) {
@@ -266,4 +265,5 @@ fun handleDownload(fileUrl: String?, context: Context) {
         Toast.makeText(context, "Invalid file URL", Toast.LENGTH_SHORT).show()
     }
 }
+
 

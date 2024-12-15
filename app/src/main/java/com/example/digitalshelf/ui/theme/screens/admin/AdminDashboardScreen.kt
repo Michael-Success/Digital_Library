@@ -1,51 +1,39 @@
 package com.example.digitalshelf.ui.theme.screens.admin
 
-
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.Button
-import androidx.compose.material3.TextField
-import androidx.compose.material3.Text
 import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.runtime.*
-import androidx.navigation.NavHostController
-import com.example.digitalshelf.viewmodels.AdminViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
+import com.example.digitalshelf.R
 import com.example.digitalshelf.models.Resource
-import androidx.compose.runtime.collectAsState
-
-
-
-
+import com.example.digitalshelf.viewmodels.AdminViewModel
 
 @Composable
 fun AdminDashboardScreen(navController: NavHostController, viewModel: AdminViewModel = viewModel()) {
-    // State for resource details and error messages
     var resourceName by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
     var fileType by remember { mutableStateOf("") }
     var fileUri by remember { mutableStateOf<Uri?>(null) }
     var errorMessage by remember { mutableStateOf("") }
 
-
-    // State for monitoring upload progress and status
     val uploadProgress by viewModel.uploadProgress.collectAsState()
     val uploadStatus by viewModel.uploadStatus.collectAsState()
 
-    // File selection launcher
     val getFileResult = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         fileUri = uri
     }
 
-    // Callback to clear fields after successful upload
     val clearFields = {
         resourceName = ""
         description = ""
@@ -72,34 +60,35 @@ fun AdminDashboardScreen(navController: NavHostController, viewModel: AdminViewM
                 modifier = Modifier.padding(bottom = 16.dp)
             )
 
-            // Resource Name Input
             TextField(
                 value = resourceName,
                 onValueChange = { resourceName = it },
                 label = { Text("Resource Name") },
-                modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp)
             )
 
-            // Resource Description Input
             TextField(
                 value = description,
                 onValueChange = { description = it },
                 label = { Text("Description") },
-                modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp)
             )
 
-            // File Type Input (e.g., PDF, Video, Audio, Word)
             TextField(
                 value = fileType,
                 onValueChange = { fileType = it },
                 label = { Text("File Type (PDF, Video, Audio, Word)") },
-                modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp)
             )
 
-            // Select File Button
             Button(
                 onClick = {
-                    // Launch file picker for multiple file types (PDFs, Word Docs, Audio, Video)
                     getFileResult.launch("application/pdf, application/msword, application/vnd.openxmlformats-officedocument.wordprocessingml.document, audio/*, video/*")
                 },
                 modifier = Modifier.padding(bottom = 16.dp)
@@ -107,7 +96,6 @@ fun AdminDashboardScreen(navController: NavHostController, viewModel: AdminViewM
                 Text(text = "Select File")
             }
 
-            // Use UploadResourceButton composable for the upload action
             UploadResourceButton(
                 viewModel = viewModel,
                 resourceName = resourceName,
@@ -117,28 +105,27 @@ fun AdminDashboardScreen(navController: NavHostController, viewModel: AdminViewM
                 onFieldsCleared = clearFields
             )
 
-            // Progress Bar for file upload
-            if (uploadProgress > 0f) {
+            // Progress bar to show upload progress
+            if (uploadProgress > 0f && uploadProgress < 100f) {
                 LinearProgressIndicator(
                     progress = uploadProgress / 100f,
-                    modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 16.dp)
                 )
                 Text(text = "Uploading... ${uploadProgress.toInt()}%", fontSize = 16.sp)
             }
 
-            // Error Message
             if (errorMessage.isNotEmpty()) {
                 Text(text = errorMessage, color = Color.Red, modifier = Modifier.padding(bottom = 8.dp))
             }
 
-            // Success Message from ViewModel
             if (uploadStatus.isNotEmpty()) {
                 Text(text = uploadStatus, color = Color.Green, modifier = Modifier.padding(bottom = 8.dp))
             }
         }
     }
 }
-
 
 @Composable
 fun UploadResourceButton(
@@ -147,11 +134,14 @@ fun UploadResourceButton(
     description: String,
     fileType: String,
     fileUri: Uri?,
-    onFieldsCleared: () -> Unit // Callback to clear fields after successful upload
+    onFieldsCleared: () -> Unit
 ) {
     var errorMessage by remember { mutableStateOf("") }
     val uploadStatus by viewModel.uploadStatus.collectAsState()
     var loading by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+
+    val adminViewModel: AdminViewModel = viewModel()
 
     LaunchedEffect(uploadStatus) {
         if (uploadStatus == "Upload successfully!") {
@@ -161,28 +151,36 @@ fun UploadResourceButton(
             errorMessage = uploadStatus
         }
     }
+
+    val drawableResIds = when (fileType) {
+        "Books" -> listOf(R.drawable.book_image1, R.drawable.book_image2, R.drawable.book_image3, R.drawable.book_image4)
+        "Audios" -> listOf(R.drawable.audio_image)
+        "Videos" -> listOf(R.drawable.video_image)
+        else -> listOf(R.drawable.image_placeholder) // Ensure you have this placeholder image
+    }
+
     if (loading) {
         CircularProgressIndicator(modifier = Modifier.size(48.dp))
     } else {
-
         Button(
             onClick = {
                 if (resourceName.isBlank() || description.isBlank() || fileType.isBlank() || fileUri == null) {
                     errorMessage = "All fields are required, and a file must be selected."
                 } else {
                     fileUri?.let { uri ->
-                        // Using uploadFileToStorage
-                        viewModel.uploadFileToStorage(
+                        adminViewModel.uploadFileToStorageWithPreview(
+                            context = context,
                             fileUri = uri,
-                            onSuccess = { fileUrl ->
+                            onSuccess = { fileUrl, previewUrl ->
                                 val resource = Resource(
                                     name = resourceName,
                                     description = description,
                                     fileType = fileType,
-                                    fileUrl = fileUrl
+                                    fileUrl = fileUrl,
+                                    previewUrl = previewUrl,
+                                    drawableResIds = drawableResIds // Include drawableResIds
                                 )
-                                // Save resource metadata to the database
-                                viewModel.uploadResourceMetadata(resource)
+                                adminViewModel.uploadResourceMetadata(resource)
                             },
                             onFailure = { failureMessage ->
                                 errorMessage = failureMessage
@@ -198,17 +196,14 @@ fun UploadResourceButton(
             )
         ) {
             Text("Upload Resource")
-        }}
-
-        if (errorMessage.isNotBlank()) {
-            Text(
-                text = errorMessage,
-                color = Color.Red,
-                style = MaterialTheme.typography.titleLarge
-            )
         }
+    }
 
-
+    if (errorMessage.isNotBlank()) {
+        Text(
+            text = errorMessage,
+            color = Color.Red,
+            style = MaterialTheme.typography.titleLarge
+        )
+    }
 }
-
-
